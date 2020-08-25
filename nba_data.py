@@ -6,20 +6,18 @@ import numpy as np
 import matplotlib.pyplot as plt 
 import datetime
 
-
+#getting NBA teams
 nba_teams = teams.get_teams()
-#Sameple code:
-# Select the dictionary for the Celtics, which contains their team ID
-# celtics = [team for team in nba_teams if team['abbreviation'] == 'BOS'][0]
 
+#getting Team Abberviations
 team_abbrev_list = sorted([team['abbreviation'] for team in nba_teams])
 #SEA, NOH, NJN, NOK are odd team names I deal with later by mapping over them
 
-
+#getting Team IDs
 team_id_list = [team['id'] for team in nba_teams]
 
 
-
+# importing the leaguegamefinder in order to get all the games for all the teams/seasons
 from nba_api.stats.endpoints import leaguegamefinder
 
 #snagged these columns from an original run, so wouldnt necessarrily have these prior creating a games df to begin with
@@ -96,7 +94,7 @@ def combine_team_games(df, keep_method='home'):
 
 
 
-
+#combining the data frame to get both teams game info on the same row
 combined_df = combine_team_games(df, keep_method=None)
 #Mapping incorrect teams DO for A and B
 combined_df['TEAM_ABBREVIATION_A'] = combined_df['TEAM_ABBREVIATION_A'].map(
@@ -140,116 +138,35 @@ for year in season_id_list:
     clean = combined_df[(combined_df['SEASON_ID'] == year) & (combined_df['GAME_DATE'] > datetime.datetime(int(year[1:]), 8, 9))].sort_values('GAME_DATE')
     clean_df = pd.concat([clean_df, clean], ignore_index=True)
 
+clean_df.to_csv('clean_df.csv')
+clean_df.tail()
+
 #taking out 2019 for now, can add back later or use as testing
-df_2019 = clean_df[clean_df.SEASON_ID == '22019']
-clean_df = clean_df[clean_df.SEASON_ID != '22019']
-clean_df
+# df_2019 = clean_df[clean_df.SEASON_ID == '22019']
+# clean_df = clean_df[clean_df.SEASON_ID != '22019']
+# clean_df
 
 #I think this is a good spot to insert the Odds data
 #well turns out I probably will be needing the vegas lines so here we go
+# took this to another file in order to make this code more readable
 
 '''couple of things to keep in mind here, what information am i going to actually have available to me. 
-We arranged the averages in order to predict the next games totals. What about in terms of gambliing information. 
+I arranged the averages in order to predict the next games totals. What about in terms of gambliing information. 
 I will have the open line. Line referring to O/U.  I will have the current line. For these purposes, I am going to 
 train the model on open and closing line. If training vastly outperfoms testing, I will take out the closing line, 
 and use current line as open line when making predictions in real time, potentially. I believe the way I have my data
 consturcted, team A is the home team. In this case, I will also add the points line, whether positive for favored or 
 neg for not. I have an open and close situation here as well that I will need to test like above.
 '''
-odds_19 = pd.read_excel('data/nba_odds_2019.xlsx')
-odds_19.Date.value_counts()
 
-
-odds_df = pd.DataFrame(columns=['SEASON_ID','GAME_ID','MATCHUP','GAME_DATE','TEAM_ID','Date','VH', 'Team', 'Final','Open', 'Close', 'ML'])
-for i in [2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018]:
-    odds_i = pd.read_excel(f'data/nba_odds_{i}.xlsx')
-    odds_i.Date = odds_i.Date.apply(lambda x: str(x)[:2] + '-' + str(x)[2:] + '-' + f'{i}' if x>999 else str(x)[:1] + '-' + str(x)[1:] + '-' + f'{i+1}')
-    odds_i.Date = pd.to_datetime(odds_i.Date)
-    odds_i.Team = odds_i.Team.map({'Atlanta':'ATL','Brooklyn':'BKN','NewJersey' :'BKN','Boston':'BOS',
-                                    'Charlotte':'CHA','Chicago':'CHI','Cleveland':'CLE','Dallas':'DAL',
-                                    'Denver':'DEN','Detroit':'DET','GoldenState':'GSW','Houston':'HOU',
-                                    'Indiana':'IND','LAClippers':'LAC','LA Clippers' :'LAC','LALakers':'LAL',
-                                    'LA Lakers': 'LAL','Memphis':'MEM','Miami':'MIA','Milwaukee':'MIL',
-                                    'Minnesota':'MIN','NewOrleans':'NOP','New Orleans' :'NOP','NewYork':'NYK',
-                                    'OklahomaCity':'OKC','Oklahoma City':'OKC','Seattle':'OKC','Orlando':'ORL',
-                                    'Philadelphia':'PHI','Phoenix':'PHX','Portland':'POR','Sacramento':'SAC',
-                                    'SanAntonio':'SAS','San Antonio':'SAS','Toronto':'TOR','Utah':'UTA',
-                                    'Washington':'WAS'})
-    odds_i['SEASON_ID']= np.nan
-    odds_i['GAME_ID']= np.nan
-    odds_i['MATCHUP'] = np.nan
-    odds_i['TEAM_ID']= np.nan
-    odds_i['GAME_DATE']= np.nan
-    odds_i=odds_i[['SEASON_ID','GAME_ID','MATCHUP','GAME_DATE','TEAM_ID','Date','VH', 'Team', 'Final','Open', 'Close', 'ML']]
-    odds_df = pd.concat([odds_df, odds_i], ignore_index=True)
-
-odds_df['Date'].value_counts()[:100]
-
-
-
-# very bad code that literally takes forever (1 hour only 19 unique Game Ids)
-# for idx1 in range(len(clean_df)):
-#     for idx2 in range(len(odds_df)):
-#         if (clean_df.GAME_DATE[idx1] == odds_df.Date[idx2]) and (clean_df.MATCHUP_A.str.contains(odds_df.Team[idx2])[idx1]):
-#             odds_df.loc[idx2,'SEASON_ID'] = clean_df.loc[idx1,'SEASON_ID']
-#             odds_df.loc[idx2, 'MATCHUP'] = clean_df.loc[idx1, 'MATCHUP_A']
-#             odds_df.loc[idx2, 'TEAM_ID'] = clean_df.loc[idx1, 'TEAM_ID_A']
-#             odds_df.loc[idx2, 'GAME_ID'] = clean_df.loc[idx1, 'GAME_ID']
-#             odds_df.loc[idx2, 'GAME_DATE'] = clean_df.loc[idx1, 'GAME_DATE']
-
-clean_df2 = clean_df.copy()
-odds_df2 = odds_df.copy()
-odds_df2= odds_df2.drop('GAME_DATE', axis = 1)
-odds_df2.columns = ['SEASON_ID', 'GAME_ID', 'MATCHUP', 'TEAM_ID', 'GAME_DATE', 'VH', 'Team',
-                    'Final', 'Open', 'Close', 'ML']
-
-
-clean_df2_dict = {}
-for idx in range(len(clean_df2)):
-    clean_df2_dict[str(clean_df2.loc[idx,'GAME_DATE']) +'_'+ str(clean_df2.loc[idx,'TEAM_ABBREVIATION_A'])]= clean_df2.loc[idx, ['SEASON_ID','MATCHUP_A','TEAM_ID_A','GAME_ID']]
-    
-
-for idx in range(len(odds_df2)):
-    if str(odds_df2.loc[idx,'GAME_DATE']) +'_'+ str(odds_df2.loc[idx,'Team']) in clean_df2_dict:
-        odds_df2.loc[idx,'GAME_ID'] = clean_df2_dict[str(odds_df2.loc[idx,'GAME_DATE']) +'_'+ str(odds_df2.loc[idx,'Team'])]['GAME_ID']
-        odds_df2.loc[idx,'MATCHUP'] = clean_df2_dict[str(odds_df2.loc[idx,'GAME_DATE']) +'_'+ str(odds_df2.loc[idx,'Team'])]['MATCHUP_A']
-        odds_df2.loc[idx,'TEAM_ID'] = clean_df2_dict[str(odds_df2.loc[idx,'GAME_DATE']) +'_'+ str(odds_df2.loc[idx,'Team'])]['TEAM_ID_A']
-        odds_df2.loc[idx,'SEASON_ID'] = clean_df2_dict[str(odds_df2.loc[idx,'GAME_DATE']) +'_'+ str(odds_df2.loc[idx,'Team'])]['SEASON_ID']
-
-#find missing ids + 1 id from 2011 that had the wrong date
-# for i in clean_df2.GAME_ID.unique():
-#     if i not in odds_df2.GAME_ID.unique():
-#         print(i)
-
-missing_id = ['0020700405','0020700406','0020700407','0021000436','0021000437',
-            '0021000433','0021000435','0021000434', '0021000700']
-
-odds_idx = [808,809,810,811,812,813,8748,8749,8750,8751,8752,8753,8754,8755,8756,8757,9281]
-clean2_idx = [808,813,809,812,811,810,8249,8246,8250,8251,8248,8247,8242,8243,8244,8245,8773]
-for idx1, idx2 in zip(odds_idx, clean2_idx):
-    odds_df2.loc[idx1,'GAME_ID'] = clean_df2.loc[idx2,'GAME_ID']
-    odds_df2.loc[idx1,'MATCHUP'] = clean_df2.loc[idx2,'MATCHUP_A'] 
-    odds_df2.loc[idx1,'TEAM_ID'] = clean_df2.loc[idx2,'TEAM_ID_A'] 
-    odds_df2.loc[idx1,'SEASON_ID'] = clean_df2.loc[idx2,'SEASON_ID']
-    odds_df2.loc[idx1,'GAME_DATE'] = clean_df2.loc[idx2,'GAME_DATE']
-
-
-### finally just took it into google sheets to clean it up
-odds_df2.to_csv('odds_df2.csv')
 
 odds_clean = pd.read_csv('odds_clean.csv')
 odds_clean.info()
      
-
+#merging the game data and odds data
 clean_df3 = clean_df.copy()
 clean_df3 = clean_df3.sort_values('GAME_ID')
 clean_df3.reset_index(drop = True, inplace=True)
-# clean_df3['ML_A'] = np.nan 
-# clean_df3['ML_B'] = np.nan 
-# clean_df3['TOTAL_OPEN'] = np.nan 
-# clean_df3['TOTAL_CLOSE'] = np.nan 
-# clean_df3['PTS_SPR_OPEN'] = np.nan 
-# clean_df3['PTS_SPR_CLOSE'] = np.nan 
 clean_df3.info()
 odds_clean['GAME_ID'] = '00' + odds_clean['GAME_ID'].astype(str)
 odds_merge = odds_clean[['SEASON_ID', 'GAME_ID', 'GAME_DATE', 'TEAM_A','TEAM_B', 'ML_A', 'ML_B', 'TOTAL_OPEN',
@@ -258,11 +175,8 @@ odds_merge = odds_clean[['SEASON_ID', 'GAME_ID', 'GAME_DATE', 'TEAM_A','TEAM_B',
 odds_merge.GAME_DATE = pd.to_datetime(odds_merge.GAME_DATE)
 odds_merge['SEASON_ID'] = odds_merge['SEASON_ID'].astype(str)
 
-odds_merge['GAME_DATE'][0] == clean_df3['GAME_DATE'][0]
-
 clean_merge = pd.merge(clean_df3, odds_merge, on=['SEASON_ID', 'GAME_ID', 'GAME_DATE'])
-clean_merge[['MATCHUP_A', 'TEAM_A', 'TEAM_B', 'ML_A','TOTAL_OPEN', 'PTS_SPR_CLOSE']].tail()
-clean_merge.info()
+clean_merge.tail()
 
 #i think this clean merge is the winner
 
@@ -560,61 +474,3 @@ test.to_csv('test1.csv',index=False)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#### INITIAL CODE WILL PROBABLY WANT TO CLEAN UP 
-# Query for games where the Celtics were playing
-# gamefinder = leaguegamefinder.LeagueGameFinder(team_id_nullable=celtics_id, season_type_nullable=SeasonType.regular)
-# The first DataFrame of those returned is what we want.
-# games = gamefinder.get_data_frames()[0]
-# games.info()
-# gamefinder2 = leaguegamefinder.LeagueGameFinder(season_type_nullable=SeasonType.regular)
-# games2 = gamefinder2.get_data_frames()[0]
-# games2.info()
-
-# 1 = Preseason, 2 = Reg Season, 4 = Playoffs
-
-#TO DO: will probably come back to this once I have all games in 1 df
-# matchups = games['MATCHUP'].str.split(' ')
-# del_idx = []
-# for idx,ele in enumerate(matchups):
-#     if ele[2] not in team_abbrev_list:
-#         del_idx.append([idx, ele])
-
-
-# del_idx
-# [[1101, ['BOS', '@', 'CHN']],
-#  [1119, ['BOS', '@', 'NOK']],
-#  [1185, ['BOS', 'vs.', 'NOK']],
-#  [1227, ['BOS', 'vs.', 'NOK']],
-#  [1250, ['BOS', '@', 'NOK']]]
-
-# games.iloc[1119]
-# games['SEASON_ID'].value_counts()
-
-
-# games['GAME_DATE'] = pd.to_datetime(games['GAME_DATE'])
-#games['GAME_DATE'].dt.month.value_counts()
-
-# games = games[games.SEASON_ID.str[1:].astype(int) >= 2005]
-#games = games[games.SEASON_ID.str[0] =='2']
-# games.sort_values('GAME_DATE')
-
-# g_2012 = games[games.SEASON_ID =='22012']
-
-# type(games.columns)
-
-
-# games.SEASON_ID.str[-4:]
