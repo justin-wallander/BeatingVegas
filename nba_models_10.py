@@ -68,7 +68,7 @@ pred = gb.predict(X_test_10)
 pred2= gb.predict(X_train_10)
 # RMSE 19.239
 # second run 17.637
-mean_squared_error(y_train_10, pred2, squared = False)
+mean_squared_error(y_test_10, pred, squared = False)
 
 
 import xgboost as xgb
