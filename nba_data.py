@@ -138,7 +138,7 @@ for year in season_id_list:
     clean = combined_df[(combined_df['SEASON_ID'] == year) & (combined_df['GAME_DATE'] > datetime.datetime(int(year[1:]), 8, 9))].sort_values('GAME_DATE')
     clean_df = pd.concat([clean_df, clean], ignore_index=True)
 
-#clean_df.to_csv('clean_df.csv')
+clean_df.to_csv('clean_df.csv')
 clean_df.info()
 
 #taking out 2019 for now, can add back later or use as testing
