@@ -72,14 +72,19 @@ mean_squared_error(y_test_10, pred, squared = False)
 
 
 import xgboost as xgb
-xgb_model = xgb.XGBRegressor(objective="reg:linear", random_state=26)
+xgb_model = xgb.XGBRegressor(objective="reg:squarederror", random_state=26)
 
 xgb_model.fit(X_train_10, y_train_10)
+y_pred_train = xgb_model.predict(X_train_10)
+y_pred_test = xgb_model.predict(X_test_10)
 
-y_pred = xgb_model.predict(X_test_10)
 
-mse=mean_squared_error(y_test_10, y_pred, squared=False)
-#first run 17.6229
+mse_train=mean_squared_error(y_train_10, y_pred_train, squared=False)
+#train error 16.550742349641002
+mse_train
+
+mse_test=mean_squared_error(y_test_10, y_pred_test, squared=False)
+#first run test error 18.515427982207743
 mse
 from sklearn.model_selection import cross_val_score, GridSearchCV, RandomizedSearchCV
 from scipy.stats import uniform, randint
