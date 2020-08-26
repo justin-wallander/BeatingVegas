@@ -11,7 +11,7 @@ Proposals for Capstone 2 project
 
 * Given the interest in basketball and sports betting, this certainly would have some benefit to people if a good model can be built. I think initially I would either just have a very plain website where the prediction are posted, but making a more handy and user-friendly web app would be ideal. Particularly if I could incorporate other leagues and predictions. 
 
-* Data Soureces: NBA API, NBA.COM, BASKETBALL-REFERENCE.COM
+* Data Soureces: NBA API, NBA.COM, BASKETBALL-REFERENCE.COM, https://www.sportsbookreviewsonline.com/scoresoddsarchives/nba/nbaoddsarchives.htm
 
 
 ## Proposal 2:
