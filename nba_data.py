@@ -129,8 +129,8 @@ combined_df['TEAM_ABBREVIATION_B'] = combined_df['TEAM_ABBREVIATION_B'].map(
 
 #I need to figure out what extra games are happening in each season and figure a way to delete them
 
-season_id_list =sorted(combined_df['SEASON_ID'].unique())
-season_id_list[:-1]
+season_id_list =sorted(clean_df['SEASON_ID'].unique())
+season_id_list
 team_abbrev_list
 #I figured out a good cutoff point to get rid of the extra preseaon games
 clean_df = pd.DataFrame(columns=combined_df.columns)
@@ -138,7 +138,8 @@ for year in season_id_list:
     clean = combined_df[(combined_df['SEASON_ID'] == year) & (combined_df['GAME_DATE'] > datetime.datetime(int(year[1:]), 8, 9))].sort_values('GAME_DATE')
     clean_df = pd.concat([clean_df, clean], ignore_index=True)
 
-clean_df.to_csv('clean_df.csv')
+#clean_df.to_csv('clean_df.csv',index=False)
+#clean_df = pd.read_csv('clean_df.csv')
 clean_df.info()
 
 #taking out 2019 for now, can add back later or use as testing
@@ -168,15 +169,16 @@ odds_clean.info()
 clean_df3 = clean_df.copy()
 clean_df3 = clean_df3.sort_values('GAME_ID')
 clean_df3.reset_index(drop = True, inplace=True)
-clean_df3.info()
+
 odds_clean['GAME_ID'] = '00' + odds_clean['GAME_ID'].astype(str)
 odds_merge = odds_clean[['SEASON_ID', 'GAME_ID', 'GAME_DATE', 'TEAM_A','TEAM_B', 'ML_A', 'ML_B', 'TOTAL_OPEN',
                         'TOTAL_CLOSE', 'PTS_SPR_OPEN', 'PTS_SPR_CLOSE']]
 
 odds_merge.GAME_DATE = pd.to_datetime(odds_merge.GAME_DATE)
-odds_merge['SEASON_ID'] = odds_merge['SEASON_ID'].astype(str)
+clean_df3.GAME_DATE = pd.to_datetime(clean_df3.GAME_DATE)
+odds_merge['GAME_ID'] = odds_merge['GAME_ID'].astype(int)
 odds_merge.info()
-
+clean_df3.info()
 clean_merge = pd.merge(clean_df3, odds_merge, on=['SEASON_ID', 'GAME_ID', 'GAME_DATE'])
 clean_merge.tail()
 
@@ -286,6 +288,7 @@ for year in season_id_list:
     for team in team_abbrev_list:
         avg_season = pd.concat([avg_season, running_col_avg(clean_merge, year, team)], ignore_index=True)
 
+#creating rolling average w/ window of 10
 avg_10 = pd.DataFrame(columns= ['SEASON_ID','TEAM_ID','TEAM_ABBREVIATION','TEAM_NAME',
                       'GAME_ID','GAME_DATE','MATCHUP','WL','MIN','PTS','FGM',
                       'FGA','FG_PCT','FG3M','FG3A','FG3_PCT','FTM','FTA',
@@ -303,7 +306,8 @@ for year in season_id_list:
         avg_10 = pd.concat([avg_10, moving_col_avg(clean_merge, year, team)], ignore_index=True)
 
 
-
+avg_10 = avg_10.dropna()
+avg_10.info()
 
 
 avg_season[avg_season.SEASON_ID=='22019'][['GAME_DATE','GAME_TOTAL', 'MATCHUP', 'TOTAL_CLOSE', 'PTS_SPR_OPEN', 'PTS']].tail()
@@ -335,19 +339,32 @@ change_list= ['WL','MIN','PTS','FGM','FGA','FG_PCT','FG3M','FG3A','FG3_PCT','FTM
             'AST_OPP','STL_OPP','BLK_OPP','TOV_OPP','PF_OPP','PLUS_MINUS_OPP']
 
 avg_season.sort_values('GAME_ID', inplace= True)
-avg_season
+avg_10.sort_values('GAME_ID', inplace= True)
 
-shifted_df = pd.DataFrame(columns=avg_season.columns)
-for year in season_id_list[:-1]:
+
+shift_season_df = pd.DataFrame(columns=avg_season.columns)
+for year in season_id_list:
     for team in team_abbrev_list:
         t_df = pd.DataFrame(columns=avg_season.columns)
         t_df[same_list] = avg_season[(avg_season.SEASON_ID == year) & (avg_season.TEAM_ABBREVIATION == team)][same_list]
         t_df[change_list] = avg_season[(avg_season.SEASON_ID == year) & (avg_season.TEAM_ABBREVIATION == team)][change_list].shift(periods=1)
         t_df.dropna(inplace=True)
-        shifted_df = pd.concat([shifted_df, t_df], ignore_index=True)
+        shift_season_df = pd.concat([shift_season_df, t_df], ignore_index=True)
+
+
+shift_10_df = pd.DataFrame(columns=avg_10.columns)
+for year in season_id_list:
+    for team in team_abbrev_list:
+        t_df = pd.DataFrame(columns=avg_10.columns)
+        t_df[same_list] = avg_10[(avg_10.SEASON_ID == year) & (avg_10.TEAM_ABBREVIATION == team)][same_list]
+        t_df[change_list] = avg_10[(avg_10.SEASON_ID == year) & (avg_10.TEAM_ABBREVIATION == team)][change_list].shift(periods=1)
+        t_df.dropna(inplace=True)
+        shift_10_df = pd.concat([shift_10_df, t_df], ignore_index=True)
         
         
-shifted_df.to_csv('shifted.csv', index= False)
+shift_season_df.to_csv('shift_season.csv', index= False)
+shift_10_df.to_csv('shift_10.csv', index= False)
+
 
 
 
@@ -356,10 +373,10 @@ shifted_df.to_csv('shifted.csv', index= False)
 
 
 #combine the data base again, this time keeping only home teams
-avg2_combined_df = combine_team_games(shifted_df)
-# avg2_comb_cols= avg2_combined_df.columns
-avg2_combined_df = avg2_combined_df.sort_values('GAME_ID')
-avg2_combined_df.reset_index(drop = True, inplace=True)
+avg_season_comb_df = combine_team_games(shift_season_df)
+# avg2_comb_cols= avg_season_comb_df.columns
+avg_season_comb_df = avg_season_comb_df.sort_values('GAME_ID')
+avg_season_comb_df.reset_index(drop = True, inplace=True)
 #need to get rid of columns, going to cheat a little and use google sheets to helo works through some
 # avg_combined_df.head().to_csv('avg_comb_df_cols.csv',index=False)
     
@@ -378,8 +395,8 @@ avg2_combined_cols = ['GAME_TOTAL_A','SEASON_ID','GAME_DATE','TEAM_ABBREVIATION_
                 'FTA_OPP_B','FT_PCT_OPP_B','OREB_OPP_B','DREB_OPP_B','REB_OPP_B','AST_OPP_B','STL_OPP_B',
                 'BLK_OPP_B','TOV_OPP_B','PF_OPP_B']
 
-avg2_combined_df = avg2_combined_df[avg2_combined_cols]
-avg2_combined_df.columns = ['GAME_TOTAL','SEASON_ID','GAME_DATE','TEAM_A', 'ML_A',
+avg_season_comb_df = avg_season_comb_df[avg2_combined_cols]
+avg_season_comb_df.columns = ['GAME_TOTAL','SEASON_ID','GAME_DATE','TEAM_A', 'ML_A',
                 'TOTAL_OPEN','TOTAL_CLOSE','PTS_SPR_OPEN','PTS_SPR_CLOSE','GP_A','WL_A','PTS_A','FGM_A',
                 'FGA_A','FG_PCT_A','FG3M_A','FG3A_A','FG3_PCT_A','FTM_A','FTA_A','FT_PCT_A','OREB_A','DREB_A',
                 'REB_A','AST_A','STL_A','BLK_A','TOV_A','PF_A','PLUS_MINUS_A','PTS_OPP_A','FGM_OPP_A','FGA_OPP_A',
@@ -391,27 +408,91 @@ avg2_combined_df.columns = ['GAME_TOTAL','SEASON_ID','GAME_DATE','TEAM_A', 'ML_A
                 'FGA_OPP_B','FG_PCT_OPP_B','FG3M_OPP_B','FG3A_OPP_B','FG3_PCT_OPP_B','FTM_OPP_B',
                 'FTA_OPP_B','FT_PCT_OPP_B','OREB_OPP_B','DREB_OPP_B','REB_OPP_B','AST_OPP_B','STL_OPP_B',
                 'BLK_OPP_B','TOV_OPP_B','PF_OPP_B']
-avg2_combined_df.info()
-avg2_combined_df.GAME_TOTAL = avg2_combined_df.GAME_TOTAL.astype(int)
+avg_season_comb_df.info()
+avg_season_comb_df.GAME_TOTAL = avg_season_comb_df.GAME_TOTAL.astype(int)
 #now i need to split this up the dummy vaiables, to ordinal, and then create train and test csvs
-avg2_combined_df['GAME_DATE'] = avg2_combined_df['GAME_DATE'].apply(lambda x: x.toordinal())
+avg_season_comb_df['GAME_DATE'] = avg_season_comb_df['GAME_DATE'].apply(lambda x: x.toordinal())
 
-avg2_combined_df= pd.concat([avg2_combined_df, pd.get_dummies(avg2_combined_df['TEAM_A'],prefix='TEAM_A', drop_first=True)], axis = 1)
-avg2_combined_df= pd.concat([avg2_combined_df, pd.get_dummies(avg2_combined_df['TEAM_B'],prefix='TEAM_B', drop_first=True)], axis = 1)
-avg2_combined_df= avg2_combined_df.drop(['TEAM_A', 'TEAM_B'], axis = 1)
-avg2_combined_df.info()
-
-
-test = avg2_combined_df[(avg2_combined_df['SEASON_ID'] == '22008') | (avg2_combined_df['SEASON_ID'] == '22012') | (avg2_combined_df['SEASON_ID'] == '22017')]
-train = avg2_combined_df[(avg2_combined_df['SEASON_ID'] != '22008') & (avg2_combined_df['SEASON_ID'] != '22012') & (avg2_combined_df['SEASON_ID'] != '22017')]
-train = train.drop('SEASON_ID', axis = 1)
-test = test.drop('SEASON_ID', axis = 1)
+avg_season_comb_df= pd.concat([avg_season_comb_df, pd.get_dummies(avg_season_comb_df['TEAM_A'],prefix='TEAM_A', drop_first=True)], axis = 1)
+avg_season_comb_df= pd.concat([avg_season_comb_df, pd.get_dummies(avg_season_comb_df['TEAM_B'],prefix='TEAM_B', drop_first=True)], axis = 1)
+avg_season_comb_df= avg_season_comb_df.drop(['TEAM_A', 'TEAM_B'], axis = 1)
 
 
 
+test_season = avg_season_comb_df[(avg_season_comb_df['SEASON_ID'] == 22017) | (avg_season_comb_df['SEASON_ID'] == 22018) | (avg_season_comb_df['SEASON_ID'] == 22019)]
+train_season = avg_season_comb_df[(avg_season_comb_df['SEASON_ID'] != 22017) & (avg_season_comb_df['SEASON_ID'] != 22018) & (avg_season_comb_df['SEASON_ID'] != 22019)]
+train_season = train_season.drop('SEASON_ID', axis = 1)
+test_season = test_season.drop('SEASON_ID', axis = 1)
 
-train.to_csv('train1.csv',index=False)
-test.to_csv('test1.csv',index=False)
+train_season.info()
+test_season.info()
+
+
+
+
+train_season.to_csv('train_season.csv',index=False)
+test_season.to_csv('test_season.csv',index=False)
+
+ #combine the data base again, this time keeping only home teams
+avg_10_comb_df = combine_team_games(shift_10_df)
+# avg2_comb_cols= avg_10_comb_df.columns
+avg_10_comb_df = avg_10_comb_df.sort_values('GAME_ID')
+avg_10_comb_df.reset_index(drop = True, inplace=True)
+#need to get rid of columns, going to cheat a little and use google sheets to helo works through some
+# avg_combined_df.head().to_csv('avg_comb_df_cols.csv',index=False)
+    
+
+
+avg2_combined_cols = ['GAME_TOTAL_A','SEASON_ID','GAME_DATE','TEAM_ABBREVIATION_A','ML_A_A',
+                'TOTAL_OPEN_A','TOTAL_CLOSE_A','PTS_SPR_OPEN_A','PTS_SPR_CLOSE_A','GP_A','WL_A','PTS_A','FGM_A',
+                'FGA_A','FG_PCT_A','FG3M_A','FG3A_A','FG3_PCT_A','FTM_A','FTA_A','FT_PCT_A','OREB_A','DREB_A',
+                'REB_A','AST_A','STL_A','BLK_A','TOV_A','PF_A','PLUS_MINUS_A','PTS_OPP_A','FGM_OPP_A','FGA_OPP_A',
+                'FG_PCT_OPP_A','FG3M_OPP_A','FG3A_OPP_A','FG3_PCT_OPP_A','FTM_OPP_A','FTA_OPP_A',
+                'FT_PCT_OPP_A','OREB_OPP_A','DREB_OPP_A','REB_OPP_A','AST_OPP_A','STL_OPP_A','BLK_OPP_A',	
+                'TOV_OPP_A','PF_OPP_A','TEAM_ABBREVIATION_B','ML_B_A','GP_B','WL_B','PTS_B','FGM_B','FGA_B',	
+                'FG_PCT_B','FG3M_B','FG3A_B','FG3_PCT_B','FTM_B','FTA_B','FT_PCT_B','OREB_B','DREB_B',	
+                'REB_B','AST_B','STL_B','BLK_B','TOV_B','PF_B','PLUS_MINUS_B','PTS_OPP_B','FGM_OPP_B',	
+                'FGA_OPP_B','FG_PCT_OPP_B','FG3M_OPP_B','FG3A_OPP_B','FG3_PCT_OPP_B','FTM_OPP_B',
+                'FTA_OPP_B','FT_PCT_OPP_B','OREB_OPP_B','DREB_OPP_B','REB_OPP_B','AST_OPP_B','STL_OPP_B',
+                'BLK_OPP_B','TOV_OPP_B','PF_OPP_B']
+
+avg_10_comb_df = avg_10_comb_df[avg2_combined_cols]
+avg_10_comb_df.columns = ['GAME_TOTAL','SEASON_ID','GAME_DATE','TEAM_A', 'ML_A',
+                'TOTAL_OPEN','TOTAL_CLOSE','PTS_SPR_OPEN','PTS_SPR_CLOSE','GP_A','WL_A','PTS_A','FGM_A',
+                'FGA_A','FG_PCT_A','FG3M_A','FG3A_A','FG3_PCT_A','FTM_A','FTA_A','FT_PCT_A','OREB_A','DREB_A',
+                'REB_A','AST_A','STL_A','BLK_A','TOV_A','PF_A','PLUS_MINUS_A','PTS_OPP_A','FGM_OPP_A','FGA_OPP_A',
+                'FG_PCT_OPP_A','FG3M_OPP_A','FG3A_OPP_A','FG3_PCT_OPP_A','FTM_OPP_A','FTA_OPP_A',
+                'FT_PCT_OPP_A','OREB_OPP_A','DREB_OPP_A','REB_OPP_A','AST_OPP_A','STL_OPP_A','BLK_OPP_A',	
+                'TOV_OPP_A','PF_OPP_A','TEAM_B','ML_B','GP_B','WL_B','PTS_B','FGM_B','FGA_B',	
+                'FG_PCT_B','FG3M_B','FG3A_B','FG3_PCT_B','FTM_B','FTA_B','FT_PCT_B','OREB_B','DREB_B',	
+                'REB_B','AST_B','STL_B','BLK_B','TOV_B','PF_B','PLUS_MINUS_B','PTS_OPP_B','FGM_OPP_B',	
+                'FGA_OPP_B','FG_PCT_OPP_B','FG3M_OPP_B','FG3A_OPP_B','FG3_PCT_OPP_B','FTM_OPP_B',
+                'FTA_OPP_B','FT_PCT_OPP_B','OREB_OPP_B','DREB_OPP_B','REB_OPP_B','AST_OPP_B','STL_OPP_B',
+                'BLK_OPP_B','TOV_OPP_B','PF_OPP_B']
+
+avg_10_comb_df.GAME_TOTAL = avg_10_comb_df.GAME_TOTAL.astype(int)
+#now i need to split this up the dummy vaiables, to ordinal, and then create train and test csvs
+avg_10_comb_df['GAME_DATE'] = avg_10_comb_df['GAME_DATE'].apply(lambda x: x.toordinal())
+
+avg_10_comb_df= pd.concat([avg_10_comb_df, pd.get_dummies(avg_10_comb_df['TEAM_A'],prefix='TEAM_A', drop_first=True)], axis = 1)
+avg_10_comb_df= pd.concat([avg_10_comb_df, pd.get_dummies(avg_10_comb_df['TEAM_B'],prefix='TEAM_B', drop_first=True)], axis = 1)
+avg_10_comb_df= avg_10_comb_df.drop(['TEAM_A', 'TEAM_B'], axis = 1)
+
+
+
+test_10 = avg_10_comb_df[(avg_10_comb_df['SEASON_ID'] == 22017) | (avg_10_comb_df['SEASON_ID'] == 22018) | (avg_10_comb_df['SEASON_ID'] == 22019)]
+train_10 = avg_10_comb_df[(avg_10_comb_df['SEASON_ID'] != 22017) & (avg_10_comb_df['SEASON_ID'] != 22018) & (avg_10_comb_df['SEASON_ID'] != 22019)]
+train_10 = train_10.drop('SEASON_ID', axis = 1)
+test_10 = test_10.drop('SEASON_ID', axis = 1)
+
+train_10.info()
+test_10.info()
+
+
+
+
+train_10.to_csv('train_10.csv',index=False)
+test_10.to_csv('test_10.csv',index=False)
 
 
 
