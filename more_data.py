@@ -33,7 +33,7 @@ game_id = game_id.GAME_ID
 game_id[-1:]
 df = pd.DataFrame()#columns=cols)
 box_adv = boxscoreadvancedv2.BoxScoreAdvancedV2(game_id = 21801211)
-games = gamefinder.get_data_frames()[0]
+games = box_adv.get_data_frames()[0]
 print(games)
 
 #creating database of games going back to 2007 - as far back as my odds database goes

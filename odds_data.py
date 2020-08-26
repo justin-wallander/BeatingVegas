@@ -1,13 +1,18 @@
+import pandas as pd 
+import numpy as np
+import datetime
+
+
 clean_df = pd.read_csv('clean_df.csv')
-odds_19 = pd.read_excel('data/nba_odds_2019.xlsx')
-odds_19.Date.value_counts()
+# odds_19 = pd.read_excel('data/nba_odds_2019.xlsx')
+# odds_19.Date.value_counts()
 
 
 odds_df = pd.DataFrame(columns=['SEASON_ID','GAME_ID','MATCHUP','GAME_DATE','TEAM_ID','Date','VH', 'Team', 'Final','Open', 'Close', 'ML'])
 for i in [2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019]:
     odds_i = pd.read_excel(f'data/nba_odds_{i}.xlsx')
-    odds_i.Date = odds_i.Date.apply(lambda x: str(x)[:2] + '-' + str(x)[2:] + '-' + f'{i}' if x>999 else str(x)[:1] + '-' + str(x)[1:] + '-' + f'{i+1}')
-    odds_i.Date = pd.to_datetime(odds_i.Date)
+    odds_i.Date = odds_i.Date.apply(lambda x: f'{i}' + '-' + str(x)[:2] + '-' + str(x)[2:] if x>999 else f'{i+1}' + '-' + str(x)[:1] + '-' + str(x)[1:])
+    #odds_i.Date = pd.to_datetime(odds_i.Date)
     odds_i.Team = odds_i.Team.map({'Atlanta':'ATL','Brooklyn':'BKN','NewJersey' :'BKN','Boston':'BOS',
                                     'Charlotte':'CHA','Chicago':'CHI','Cleveland':'CLE','Dallas':'DAL',
                                     'Denver':'DEN','Detroit':'DET','GoldenState':'GSW','Houston':'HOU',
@@ -26,11 +31,18 @@ for i in [2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019]:
     odds_i=odds_i[['SEASON_ID','GAME_ID','MATCHUP','GAME_DATE','TEAM_ID','Date','VH', 'Team', 'Final','Open', 'Close', 'ML']]
     odds_df = pd.concat([odds_df, odds_i], ignore_index=True)
 
-odds_df['Date'].value_counts()[:100]
+odds_df['Date'].unique()
+odds_df.to_csv('clean_dates.csv')
+odds_df = pd.read_csv('clean_dates.csv',in)
+odds_df.drop('Unnamed: 0', axis=1, inplace=True)
+
+clean_df['GAME_DATE'].unique()
+odds_df.info()
 
 clean_df2 = clean_df.copy()
 odds_df2 = odds_df.copy()
 odds_df2= odds_df2.drop('GAME_DATE', axis = 1)
+odds_df2.info()
 odds_df2.columns = ['SEASON_ID', 'GAME_ID', 'MATCHUP', 'TEAM_ID', 'GAME_DATE', 'VH', 'Team',
                     'Final', 'Open', 'Close', 'ML']
 
@@ -38,7 +50,8 @@ odds_df2.columns = ['SEASON_ID', 'GAME_ID', 'MATCHUP', 'TEAM_ID', 'GAME_DATE', '
 clean_df2_dict = {}
 for idx in range(len(clean_df2)):
     clean_df2_dict[str(clean_df2.loc[idx,'GAME_DATE']) +'_'+ str(clean_df2.loc[idx,'TEAM_ABBREVIATION_A'])]= clean_df2.loc[idx, ['SEASON_ID','MATCHUP_A','TEAM_ID_A','GAME_ID']]
-    
+
+clean_df2_dict[str(odds_df2.loc[0,'GAME_DATE']) +'_'+ str(odds_df2.loc[0,'Team'])]
 
 for idx in range(len(odds_df2)):
     if str(odds_df2.loc[idx,'GAME_DATE']) +'_'+ str(odds_df2.loc[idx,'Team']) in clean_df2_dict:
@@ -46,6 +59,8 @@ for idx in range(len(odds_df2)):
         odds_df2.loc[idx,'MATCHUP'] = clean_df2_dict[str(odds_df2.loc[idx,'GAME_DATE']) +'_'+ str(odds_df2.loc[idx,'Team'])]['MATCHUP_A']
         odds_df2.loc[idx,'TEAM_ID'] = clean_df2_dict[str(odds_df2.loc[idx,'GAME_DATE']) +'_'+ str(odds_df2.loc[idx,'Team'])]['TEAM_ID_A']
         odds_df2.loc[idx,'SEASON_ID'] = clean_df2_dict[str(odds_df2.loc[idx,'GAME_DATE']) +'_'+ str(odds_df2.loc[idx,'Team'])]['SEASON_ID']
+
+
 
 #find missing ids + 1 id from 2011 that had the wrong date
 # for i in clean_df2.GAME_ID.unique():
@@ -66,4 +81,4 @@ for idx1, idx2 in zip(odds_idx, clean2_idx):
 
 
 ### finally just took it into google sheets to clean it up
-odds_df2.to_csv('odds_df2w19.csv')
+odds_df2.to_csv('odds_df2w19.csv', index=False)
