@@ -175,6 +175,26 @@ mean_squared_error(y_test_s, xgb_pred_nc, squared=False)
 search.best_estimator_.save_model('001.model')
 
 
+regressor = sm.OLS(y_train_nc, X_train_nc)
+regressor = regressor.fit()
+#evidently this returned a 0.991 R**2
+#second run gave us 0.993
+regressor.summary()
+preds = regressor.predict(X_test_nc)
+#18.5802074596655
+mean_squared_error(y_test_nc, preds, squared = False)
+
+from sklearn.linear_model import SGDRegressor
+from sklearn.preprocessing import StandardScaler
+ss = StandardScaler()
+ss.fit(X_train_nc,y_train_nc) 
+X_train_ss = ss.transform(X_train_nc)
+X_test_ss = ss.transform(X_test_nc)
+
+sgd = SGDRegressor()
+sgd.fit(X_train_ss, y_train_s)
+sgd.predict(X_test_ss)
+mean_squared_error(y_test_s, sgd.predict(X_test_ss), squared=False)
 
 
 

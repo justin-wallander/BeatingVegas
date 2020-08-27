@@ -367,6 +367,7 @@ shift_10_df.to_csv('shift_10.csv', index= False)
 
 
 
+shift_season_df = pd.read_csv('data/shift_season.csv')
 
 
 
@@ -410,12 +411,14 @@ avg_season_comb_df.columns = ['GAME_TOTAL','SEASON_ID','GAME_DATE','TEAM_A', 'ML
                 'BLK_OPP_B','TOV_OPP_B','PF_OPP_B']
 avg_season_comb_df.info()
 avg_season_comb_df.GAME_TOTAL = avg_season_comb_df.GAME_TOTAL.astype(int)
+avg_season_comb_df['GAME_DATE'] = pd.to_datetime(avg_season_comb_df['GAME_DATE'])
 #now i need to split this up the dummy vaiables, to ordinal, and then create train and test csvs
 avg_season_comb_df['GAME_DATE'] = avg_season_comb_df['GAME_DATE'].apply(lambda x: x.toordinal())
 
 avg_season_comb_df= pd.concat([avg_season_comb_df, pd.get_dummies(avg_season_comb_df['TEAM_A'],prefix='TEAM_A', drop_first=True)], axis = 1)
 avg_season_comb_df= pd.concat([avg_season_comb_df, pd.get_dummies(avg_season_comb_df['TEAM_B'],prefix='TEAM_B', drop_first=True)], axis = 1)
 avg_season_comb_df= avg_season_comb_df.drop(['TEAM_A', 'TEAM_B'], axis = 1)
+avg_season_comb_df.to_csv('data/avg_season.csv', index=False)
 
 
 
