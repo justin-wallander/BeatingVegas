@@ -152,7 +152,18 @@ params = {
 }
 
 
-# search.best_estimator_
+search_nc.best_estimator_
+
+# search_nc.best_estimator_
+# XGBRegressor(base_score=0.5, booster='gbtree', colsample_bylevel=1,
+#              colsample_bynode=1, colsample_bytree=0.871050138793756,
+#              gamma=0.12845693745543396, gpu_id=-1, importance_type='gain',
+#              interaction_constraints='', learning_rate=0.036085170670551454,
+#              max_delta_step=0, max_depth=2, min_child_weight=1, missing=nan,
+#              monotone_constraints='()', n_estimators=161, n_jobs=0,
+#              num_parallel_tree=1, random_state=0, reg_alpha=0, reg_lambda=1,
+#              scale_pos_weight=1, subsample=0.6964021257211186,
+#              tree_method='exact', validate_parameters=1, verbosity=None)
 
 search_nc = RandomizedSearchCV(xgb_model, param_distributions=params, random_state=26, n_iter=200, cv=3, verbose=1, n_jobs=-1, return_train_score=True)
 
