@@ -6,32 +6,123 @@ from sklearn.metrics import mean_squared_error
 import statsmodels.api as sm
 import matplotlib.pyplot as plt
 import xgboost as xgb
+from numpy import sort
+from sklearn.feature_selection import SelectFromModel
+import seaborn as sns
+plt.style.use('fivethirtyeight')
+%matplotlib inline
 
 
 season = pd.read_csv('data/avg_season.csv')
 # [22007, 22008, 22009, 22010, 22011, 22012, 22013, 22014, 22015,
 #        22016, 22017, 22018, 22019]
 
+season_teams = pd.read_csv('data/season.csv')
+dal_19 = season_teams[(season_teams.SEASON_ID==22019) & ((season_teams.TEAM_A == 'DAL') | (season_teams.TEAM_B == 'DAL'))]
+dal_19 = dal_19.iloc[int(len(dal_19)*(2/3)):, :]
+dal_19
+dal_X_test = dal_19.drop(dal_drop, axis=1)
+dal_X_test.columns = ['VEGAS_OPEN', 'PTS_SPR_OPEN', 'HOME_WIN_PCT', 'HOME_PPG', 'HOME_FGM', 'HOME_FGA',
+'HOME_FG_PCT', 'HOME_FG3M', 'HOME_FG3_PCT', 'HOME_FTM', 'HOME_OREB', 'HOME_REB', 'HOME_AST',
+'HOME_STL', 'HOME_TOV', 'HOME_PF', 'HOME_PTS_ALLOW', 'HOME_FGA_OPP', 'HOME_FG_PCT_OPP',
+'HOME_FG3_PCT_OPP', 'HOME_REB_OPP', 'HOME_AST_OPP', 'HOME_STL_OPP', 'HOME_TOV_OPP',
+'AWAY_WIN_PCT', 'AWAY_PPG', 'AWAY_FGM', 'AWAY_FGA', 'AWAY_FG3M', 'AWAY_FG3_PCT', 'AWAY_FTM',
+'AWAY_OREB', 'AWAY_REB', 'AWAY_AST', 'AWAY_STL', 'AWAY_BLK', 'AWAY_TOV', 'AWAY_PF',
+'AWAY_PTS_ALLOW', 'AWAY_FGA_OPP', 'AWAY_FG_PCT_OPP', 'AWAY_FG3_PCT_OPP', 'AWAY_REB_OPP',
+'AWAY_AST_OPP', 'AWAY_STL_OPP', 'AWAY_TOV_OPP']
+X_train.columns
+X_train.columns = ['VEGAS_OPEN', 'PTS_SPR_OPEN', 'HOME_WIN_PCT', 'HOME_PPG', 'HOME_FGM', 'HOME_FGA',
+'HOME_FG_PCT', 'HOME_FG3M', 'HOME_FG3_PCT', 'HOME_FTM', 'HOME_OREB', 'HOME_REB', 'HOME_AST',
+'HOME_STL', 'HOME_TOV', 'HOME_PF', 'HOME_PTS_ALLOW', 'HOME_FGA_OPP', 'HOME_FG_PCT_OPP',
+'HOME_FG3_PCT_OPP', 'HOME_REB_OPP', 'HOME_AST_OPP', 'HOME_STL_OPP', 'HOME_TOV_OPP',
+'AWAY_WIN_PCT', 'AWAY_PPG', 'AWAY_FGM', 'AWAY_FGA', 'AWAY_FG3M', 'AWAY_FG3_PCT', 'AWAY_FTM',
+'AWAY_OREB', 'AWAY_REB', 'AWAY_AST', 'AWAY_STL', 'AWAY_BLK', 'AWAY_TOV', 'AWAY_PF',
+'AWAY_PTS_ALLOW', 'AWAY_FGA_OPP', 'AWAY_FG_PCT_OPP', 'AWAY_FG3_PCT_OPP', 'AWAY_REB_OPP',
+'AWAY_AST_OPP', 'AWAY_STL_OPP', 'AWAY_TOV_OPP']
+X_test.columns = ['VEGAS_OPEN', 'PTS_SPR_OPEN', 'HOME_WIN_PCT', 'HOME_PPG', 'HOME_FGM', 'HOME_FGA',
+'HOME_FG_PCT', 'HOME_FG3M', 'HOME_FG3_PCT', 'HOME_FTM', 'HOME_OREB', 'HOME_REB', 'HOME_AST',
+'HOME_STL', 'HOME_TOV', 'HOME_PF', 'HOME_PTS_ALLOW', 'HOME_FGA_OPP', 'HOME_FG_PCT_OPP',
+'HOME_FG3_PCT_OPP', 'HOME_REB_OPP', 'HOME_AST_OPP', 'HOME_STL_OPP', 'HOME_TOV_OPP',
+'AWAY_WIN_PCT', 'AWAY_PPG', 'AWAY_FGM', 'AWAY_FGA', 'AWAY_FG3M', 'AWAY_FG3_PCT', 'AWAY_FTM',
+'AWAY_OREB', 'AWAY_REB', 'AWAY_AST', 'AWAY_STL', 'AWAY_BLK', 'AWAY_TOV', 'AWAY_PF',
+'AWAY_PTS_ALLOW', 'AWAY_FGA_OPP', 'AWAY_FG_PCT_OPP', 'AWAY_FG3_PCT_OPP', 'AWAY_REB_OPP',
+'AWAY_AST_OPP', 'AWAY_STL_OPP', 'AWAY_TOV_OPP']
+dal_y_test = dal_19.GAME_TOTAL
+dal_y_test
+dal_test_vegas = dal_19.TOTAL_CLOSE
+dal_test_vegas
+
+bst1 = xgb.XGBRegressor( 
+                       objective= 'reg:squarederror', 
+                       booster='gbtree', 
+                       colsample_bytree=.87,  
+                       learning_rate=.056,
+                       max_depth=2, 
+                       n_estimators=199, 
+                       n_jobs=-1,
+                       random_state=0, 
+                       reg_lambda=6,
+                       subsample=0.61,
+                       )
+
+
+bst1.fit(X_train,y_train)
+
+dal_pred = bst1.predict(dal_X_test)
+dal_pred.
+
+model_score = mean_squared_error(dal_y_test, bst1.predict(dal_X_test), squared=False)
+vegas = mean_squared_error(dal_y_test, dal_test_vegas, squared=False)
+#train_score = mean_squared_error(y_train, bst1.predict(X_train), squared=False)
+print(f'Vegas: {vegas}  Model: {model_score}')
+
+model_score = mean_squared_error(y_test, bst1.predict(X_test), squared=False)
+vegas = mean_squared_error(y_test, test_vegas, squared=False)
+#train_score = mean_squared_error(y_train, bst1.predict(X_train), squared=False)
+print(f'Vegas: {vegas}  Model: {model_score}')
+
+
+#only predicting the Mavs last 2/3 of this season, the model actually predicts better than Vegas:
+# Vegas: 21.19905658278217  Model: 21.108387307447156
+#overall though Vegas edges me out:
+#Vegas: 18.558905310422904  Model: 18.748607816130928
+fig,ax= plt.subplots(figsize=(12,10))
+ax.scatter(dal_19.GAME_DATE,dal_y_test, label='ACTUAL SCORE', marker='o', s=150)
+ax.scatter(dal_19.GAME_DATE,dal_test_vegas, label='VEGAS CLOSE', marker='_', s=110, c='#ec40f5')
+ax.scatter(dal_19.GAME_DATE,dal_pred, label='PREDICTED', marker='*', s=125, c='#ffa70f')
+ax.scatter(dal_19.GAME_DATE[abs(dal_res) < abs(vegas_res)], [280 for _ in dal_pred[abs(dal_res) < abs(vegas_res)]], c='#34b028', marker = '^', s=125, label='BEAT VEGAS')
+ax.scatter(dal_19.GAME_DATE[abs(dal_res) > abs(vegas_res)], [280 for _ in dal_pred[abs(dal_res) > abs(vegas_res)]], c='#b02828', marker = 'v', s=125, label='VEGAS WON')
+ax.tick_params(axis='x', rotation=90)
+ax.set_xlabel('GAME DATE')
+ax.set_ylabel('POINTS SCORED')
+ax.set_title('MAVS 2020 ACTUAL vs PREDICTED vs VEGAS\n BEAT VEGAS 13 out of 25 (DON\'T BET ON THIS!)')
+ax.legend(loc=2)
+
+dal_res = dal_pred - dal_y_test
+vegas_res = dal_test_vegas - dal_y_test
+abs(dal_res) < abs(vegas_res)
+
+plt_x
+plt_y = 
+X_test.columns[plt_x]
+fig,ax = plt.subplots(figsize=(30,24))
+# plt.scatter(y_test, bst1.predict(X_test)-y_test)
+xgb.plot_importance(bst1, ax=ax)
+ax.barh(plt_y, plt_x)
+
+
+
+    # dal_train_vegas = season[(season.SEASON_ID==i)].iloc[:int(len(season[(season.SEASON_ID==i)])*(2/3)), 5]
 
 
 
 
-    # X_train = season[(season.SEASON_ID==i)].iloc[:int(len(season[(season.SEASON_ID==i)])*(2/3)), 2:]
-    # y_train = season[(season.SEASON_ID==i)].iloc[:int(len(season[(season.SEASON_ID==i)])*(2/3)), 0]
+DUMMY REGRESSOR:
 
-    # X_test = season[(season.SEASON_ID==i)].iloc[int(len(season[(season.SEASON_ID==i)])*(2/3)):, 2:]
-    # y_test = season[(season.SEASON_ID==i)].iloc[int(len(season[(season.SEASON_ID==i)])*(2/3)):, 0]
-    # train_vegas = season[(season.SEASON_ID==i)].iloc[:int(len(season[(season.SEASON_ID==i)])*(2/3)), 5]
-    # test_vegas = season[(season.SEASON_ID==i)].iloc[int(len(season[(season.SEASON_ID==i)])*(2/3)):, 5]
-
-
-
-#DUMMY REGRESSOR:
-
-# dummy_regr = DummyRegressor(strategy="mean")
-# dummy_regr.fit(X_train, y_train)
-# #21.982204049481744
-# mean_squared_error(y_test, dummy_regr.predict(X_test), squared = False)
+dummy_regr = DummyRegressor(strategy="mean")
+dummy_regr.fit(X_train, y_train)
+#21.982204049481744
+mean_squared_error(y_test, dummy_regr.predict(X_test), squared = False)
 
 #OLS
 
@@ -95,171 +186,217 @@ Vegas: 18.43497530800466  Model: 18.822649836118806  Train: 17.423180296248294
 Now going to see about doing a bit more feature selection:
 got the featues down significantly (from 144 to 47) and the score down as well:
 Vegas: 18.43497530800466  Model: 18.778468234871113  Train: 17.779103320602132
+down to 46 featurs:
+Vegas: 18.43497530800466  Model: 18.748607816130928  Train: 17.31403219460038
+
 
 
 
 '''
 
-i = 22017
-X_train = season[(season.SEASON_ID==i) | (season.SEASON_ID==i+1) | (season.SEASON_ID==i+2)].iloc[:int(len(season[(season.SEASON_ID==i) | 
-          (season.SEASON_ID==i+1) | (season.SEASON_ID==i+2)])*(7/9)), 2:86].drop(['TOTAL_CLOSE','ML_A','ML_B','WL_A','WL_B','PLUS_MINUS_A','PLUS_MINUS_B'], axis = 1)
-y_train = season[(season.SEASON_ID==i) | (season.SEASON_ID==i+1) | (season.SEASON_ID==i+2)].iloc[:int(len(season[(season.SEASON_ID==i) | 
-         (season.SEASON_ID==i+1) | (season.SEASON_ID==i+2)])*(7/9)), 0]
-X_train
-X_test = season[(season.SEASON_ID==i) | (season.SEASON_ID==i+1) | (season.SEASON_ID==i+2)].iloc[int(len(season[(season.SEASON_ID==i) | 
-         (season.SEASON_ID==i+1) | (season.SEASON_ID==i+2)])*(7/9)):, 2:86].drop(['TOTAL_CLOSE','ML_A','ML_B','WL_A','WL_B','PLUS_MINUS_A','PLUS_MINUS_B'], axis = 1)
-y_test = season[(season.SEASON_ID==i) | (season.SEASON_ID==i+1) | (season.SEASON_ID==i+2)].iloc[int(len(season[(season.SEASON_ID==i) | 
-         (season.SEASON_ID==i+1) | (season.SEASON_ID==i+2)])*(7/9)):, 0]
-train_vegas = season[(season.SEASON_ID==i) | (season.SEASON_ID==i+1) | (season.SEASON_ID==i+2)].iloc[:int(len(season[(season.SEASON_ID==i) | 
-              (season.SEASON_ID==i+1) | (season.SEASON_ID==i+2)])*(7/9)), 5]
-test_vegas = season[(season.SEASON_ID==i) | (season.SEASON_ID==i+1) | (season.SEASON_ID==i+2)].iloc[int(len(season[(season.SEASON_ID==i) | 
-             (season.SEASON_ID==i+1) | (season.SEASON_ID==i+2)])*(7/9)):, 5]
+# i = 22017
+# X_train = season[(season.SEASON_ID==i) | (season.SEASON_ID==i+1) | (season.SEASON_ID==i+2)].iloc[:int(len(season[(season.SEASON_ID==i) | 
+#           (season.SEASON_ID==i+1) | (season.SEASON_ID==i+2)])*(7/9)), 2:86].drop(['TOTAL_CLOSE','ML_A','ML_B','WL_A','WL_B','PLUS_MINUS_A','PLUS_MINUS_B'], axis = 1)
+# y_train = season[(season.SEASON_ID==i) | (season.SEASON_ID==i+1) | (season.SEASON_ID==i+2)].iloc[:int(len(season[(season.SEASON_ID==i) | 
+#          (season.SEASON_ID==i+1) | (season.SEASON_ID==i+2)])*(7/9)), 0]
+# X_train
+# X_test = season[(season.SEASON_ID==i) | (season.SEASON_ID==i+1) | (season.SEASON_ID==i+2)].iloc[int(len(season[(season.SEASON_ID==i) | 
+#          (season.SEASON_ID==i+1) | (season.SEASON_ID==i+2)])*(7/9)):, 2:86].drop(['TOTAL_CLOSE','ML_A','ML_B','WL_A','WL_B','PLUS_MINUS_A','PLUS_MINUS_B'], axis = 1)
+# y_test = season[(season.SEASON_ID==i) | (season.SEASON_ID==i+1) | (season.SEASON_ID==i+2)].iloc[int(len(season[(season.SEASON_ID==i) | 
+#          (season.SEASON_ID==i+1) | (season.SEASON_ID==i+2)])*(7/9)):, 0]
+# train_vegas = season[(season.SEASON_ID==i) | (season.SEASON_ID==i+1) | (season.SEASON_ID==i+2)].iloc[:int(len(season[(season.SEASON_ID==i) | 
+#               (season.SEASON_ID==i+1) | (season.SEASON_ID==i+2)])*(7/9)), 5]
+# test_vegas = season[(season.SEASON_ID==i) | (season.SEASON_ID==i+1) | (season.SEASON_ID==i+2)].iloc[int(len(season[(season.SEASON_ID==i) | 
+#              (season.SEASON_ID==i+1) | (season.SEASON_ID==i+2)])*(7/9)):, 5]
 
 
 
 
 
-xgb_model = xgb.XGBRegressor()
+# xgb_model = xgb.XGBRegressor()
 
-params = {
-    "colsample_bytree": [0.7,0.8,0.9,0.95,1],
-    "gamma": [0, 0.2],
-    "learning_rate": [0.02,0.025,0.03,0.035,0.04,0.045, 0.05],
-    "max_depth": [2], # default 3
-    "n_estimators": [120,140,150,160,170,200,250],
-    "subsample": [0.6,0.7,0.8,0.9,0.95,1]}
+# params = {
+#     "colsample_bytree": [0.7,0.8,0.9,0.95,1],
+#     "gamma": [0, 0.2],
+#     "learning_rate": [0.02,0.025,0.03,0.035,0.04,0.045, 0.05],
+#     "max_depth": [2], # default 3
+#     "n_estimators": [120,140,150,160,170,200,250],
+#     "subsample": [0.6,0.7,0.8,0.9,0.95,1]}
 
-search = GridSearchCV(xgb_model, param_grid=params, cv=3, verbose=1, n_jobs=-1, return_train_score=True)
+# search = GridSearchCV(xgb_model, param_grid=params, cv=3, verbose=1, n_jobs=-1, return_train_score=True)
 
-search.fit(X_train, y_train)
+# search.fit(X_train, y_train)
 
-xgb_pred= search.best_estimator_.predict(X_test)
-xgb_pred
-search.best_estimator_
-mean_squared_error(y_test, xgb_pred, squared=False)
-
-
-XGBRegressor(base_score=0.5, 
-             booster='gbtree', 
-             colsample_bytree=1
-             learning_rate=0.035, 
-             max_depth=2,
-             n_estimators=160,  
-             random_state=0,
-             reg_lambda=1, 
-             subsample=0.7,
-             )
-
-for i in np.linspace(0.0, 0.3,51):
-# for i in np.linspace(0.5, 1,51):
-# for i in range(10):
-    bst = xgb.XGBRegressor(base_score=0.5, 
-                       booster='gbtree', 
-                       colsample_bytree=0.77,
-                       gpu_id=-1, 
-                       gamma=0, 
-                       learning_rate=0.064,
-                       max_depth=2, 
-                       n_estimators=130, 
-                       n_jobs=-1,
-                       random_state=0, 
-                       reg_lambda=1,
-                       subsample=0.76,
-                       )
-    bst.fit(X_train,y_train)
-    model_score = mean_squared_error(y_test, bst.predict(X_test), squared=False)
-    vegas = mean_squared_error(np.append(y_train,y_test), np.append(train_vegas,test_vegas), squared = False)
-    train_score = mean_squared_error(y_train, bst.predict(X_train), squared=False)
-    print(f'{i} Vegas: {vegas}  Model: {model_score}  Train: {train_score}')
-
-bst = xgb.XGBRegressor(base_score=0.5, 
-                       booster='gbtree', 
-                       colsample_bytree=0.77,
-                       gpu_id=-1, 
-                       gamma=0, 
-                       learning_rate=0.064,
-                       max_depth=2, 
-                       n_estimators=130, 
-                       n_jobs=-1,
-                       random_state=0, 
-                       reg_lambda=1,
-                       subsample=0.76,
-                       )
-bst.fit(X_train,y_train)
-train_score = mean_squared_error(y_train, bst.predict(X_train), squared=False)
-model_score = mean_squared_error(y_test, bst.predict(X_test), squared=False)
-vegas = mean_squared_error(np.append(y_train,y_test), np.append(train_vegas,test_vegas), squared = False)
-print(f'Vegas: {vegas}  Model: {model_score}  Train: {train_score}')
-
-for i in range(22007,22018):
-    X_train = season[(season.SEASON_ID==i) | (season.SEASON_ID==i+1) | (season.SEASON_ID==i+2)].iloc[:int(len(season[(season.SEASON_ID==i) | 
-          (season.SEASON_ID==i+1) | (season.SEASON_ID==i+2)])*(7/9)), 2:86].drop(['TOTAL_CLOSE','ML_A','ML_B','WL_A','WL_B','PLUS_MINUS_A','PLUS_MINUS_B'], axis = 1)
-    y_train = season[(season.SEASON_ID==i) | (season.SEASON_ID==i+1) | (season.SEASON_ID==i+2)].iloc[:int(len(season[(season.SEASON_ID==i) | 
-         (season.SEASON_ID==i+1) | (season.SEASON_ID==i+2)])*(7/9)), 0]
-    X_train
-    X_test = season[(season.SEASON_ID==i) | (season.SEASON_ID==i+1) | (season.SEASON_ID==i+2)].iloc[int(len(season[(season.SEASON_ID==i) | 
-         (season.SEASON_ID==i+1) | (season.SEASON_ID==i+2)])*(7/9)):, 2:86].drop(['TOTAL_CLOSE','ML_A','ML_B','WL_A','WL_B','PLUS_MINUS_A','PLUS_MINUS_B'], axis = 1)
-    y_test = season[(season.SEASON_ID==i) | (season.SEASON_ID==i+1) | (season.SEASON_ID==i+2)].iloc[int(len(season[(season.SEASON_ID==i) | 
-         (season.SEASON_ID==i+1) | (season.SEASON_ID==i+2)])*(7/9)):, 0]
-    train_vegas = season[(season.SEASON_ID==i) | (season.SEASON_ID==i+1) | (season.SEASON_ID==i+2)].iloc[:int(len(season[(season.SEASON_ID==i) | 
-              (season.SEASON_ID==i+1) | (season.SEASON_ID==i+2)])*(7/9)), 5]
-    test_vegas = season[(season.SEASON_ID==i) | (season.SEASON_ID==i+1) | (season.SEASON_ID==i+2)].iloc[int(len(season[(season.SEASON_ID==i) | 
-             (season.SEASON_ID==i+1) | (season.SEASON_ID==i+2)])*(7/9)):, 5]
-
-    bst.fit(X_train,y_train)
-    train_score = mean_squared_error(y_train, bst.predict(X_train), squared=False)
-    vegas = mean_squared_error(np.append(y_train,y_test), np.append(train_vegas,test_vegas), squared = False)
-    model_score = mean_squared_error(y_test, bst.predict(X_test), squared=False)
-    print(f'{i} = Vegas: {vegas}  Model: {model_score}  Train: {train_score}')
+# xgb_pred= search.best_estimator_.predict(X_test)
+# xgb_pred
+# search.best_estimator_
+# mean_squared_error(y_test, xgb_pred, squared=False)
 
 
+# XGBRegressor(base_score=0.5, 
+#              booster='gbtree', 
+#              colsample_bytree=1
+#              learning_rate=0.035, 
+#              max_depth=2,
+#              n_estimators=160,  
+#              random_state=0,
+#              reg_lambda=1, 
+#              subsample=0.7,
+#              )
 
-plt_x = sorted(bst.feature_importances_[bst.feature_importances_>=0.013398], reverse=False)
+# for i in np.linspace(0.0, 0.3,51):
+# # for i in np.linspace(0.5, 1,51):
+# # for i in range(10):
+#     bst = xgb.XGBRegressor(base_score=0.5, 
+#                        booster='gbtree', 
+#                        colsample_bytree=0.77,
+#                        gpu_id=-1, 
+#                        gamma=0, 
+#                        learning_rate=0.064,
+#                        max_depth=2, 
+#                        n_estimators=130, 
+#                        n_jobs=-1,
+#                        random_state=0, 
+#                        reg_lambda=1,
+#                        subsample=0.76,
+#                        )
+#     bst.fit(X_train,y_train)
+#     model_score = mean_squared_error(y_test, bst.predict(X_test), squared=False)
+#     vegas = mean_squared_error(np.append(y_train,y_test), np.append(train_vegas,test_vegas), squared = False)
+#     train_score = mean_squared_error(y_train, bst.predict(X_train), squared=False)
+#     print(f'{i} Vegas: {vegas}  Model: {model_score}  Train: {train_score}')
+
+# bst = xgb.XGBRegressor(base_score=0.5, 
+#                        booster='gbtree', 
+#                        colsample_bytree=0.77,
+#                        gpu_id=0, 
+#                        gamma=0, 
+#                        learning_rate=0.064,
+#                        max_depth=2, 
+#                        n_estimators=130, 
+#                        n_jobs=-1,
+#                        random_state=0, 
+#                        reg_lambda=1,
+#                        subsample=0.76,
+#                        )
+# bst.fit(X_train,y_train)
+# train_score = mean_squared_error(y_train, bst.predict(X_train), squared=False)
+# model_score = mean_squared_error(y_test, bst.predict(X_test), squared=False)
+# vegas = mean_squared_error(np.append(y_train,y_test), np.append(train_vegas,test_vegas), squared = False)
+# print(f'Vegas: {vegas}  Model: {model_score}  Train: {train_score}')
+
+# for i in range(22007,22018):
+#     X_train = season[(season.SEASON_ID==i) | (season.SEASON_ID==i+1) | (season.SEASON_ID==i+2)].iloc[:int(len(season[(season.SEASON_ID==i) | 
+#           (season.SEASON_ID==i+1) | (season.SEASON_ID==i+2)])*(7/9)), 2:86].drop(['TOTAL_CLOSE','ML_A','ML_B','WL_A','WL_B','PLUS_MINUS_A','PLUS_MINUS_B'], axis = 1)
+#     y_train = season[(season.SEASON_ID==i) | (season.SEASON_ID==i+1) | (season.SEASON_ID==i+2)].iloc[:int(len(season[(season.SEASON_ID==i) | 
+#          (season.SEASON_ID==i+1) | (season.SEASON_ID==i+2)])*(7/9)), 0]
+#     X_train
+#     X_test = season[(season.SEASON_ID==i) | (season.SEASON_ID==i+1) | (season.SEASON_ID==i+2)].iloc[int(len(season[(season.SEASON_ID==i) | 
+#          (season.SEASON_ID==i+1) | (season.SEASON_ID==i+2)])*(7/9)):, 2:86].drop(['TOTAL_CLOSE','ML_A','ML_B','WL_A','WL_B','PLUS_MINUS_A','PLUS_MINUS_B'], axis = 1)
+#     y_test = season[(season.SEASON_ID==i) | (season.SEASON_ID==i+1) | (season.SEASON_ID==i+2)].iloc[int(len(season[(season.SEASON_ID==i) | 
+#          (season.SEASON_ID==i+1) | (season.SEASON_ID==i+2)])*(7/9)):, 0]
+#     train_vegas = season[(season.SEASON_ID==i) | (season.SEASON_ID==i+1) | (season.SEASON_ID==i+2)].iloc[:int(len(season[(season.SEASON_ID==i) | 
+#               (season.SEASON_ID==i+1) | (season.SEASON_ID==i+2)])*(7/9)), 5]
+#     test_vegas = season[(season.SEASON_ID==i) | (season.SEASON_ID==i+1) | (season.SEASON_ID==i+2)].iloc[int(len(season[(season.SEASON_ID==i) | 
+#              (season.SEASON_ID==i+1) | (season.SEASON_ID==i+2)])*(7/9)):, 5]
+
+#     bst.fit(X_train,y_train)
+#     train_score = mean_squared_error(y_train, bst.predict(X_train), squared=False)
+#     vegas = mean_squared_error(np.append(y_train,y_test), np.append(train_vegas,test_vegas), squared = False)
+#     model_score = mean_squared_error(y_test, bst.predict(X_test), squared=False)
+#     print(f'{i} = Vegas: {vegas}  Model: {model_score}  Train: {train_score}')
+
+
+
+plt_x = bst1.feature_importances_ <=0.012422
 plt_x
-plt_y = X_test.columns[np.argsort(bst.feature_importances_[bst.feature_importances_>=0.013398])]
+plt_y = 
+X_test.columns[plt_x]
 fig,ax = plt.subplots(figsize=(30,24))
-#xgb.plot_importance(bst, ax=ax)
+# plt.scatter(y_test, bst1.predict(X_test)-y_test)
+xgb.plot_importance(bst1, ax=ax)
 ax.barh(plt_y, plt_x)
 
-drop_cols = list(X_test.columns[bst.feature_importances_<0.011533])
-drop_cols.extend(['TOTAL_CLOSE','ML_A','ML_B','WL_A','WL_B','PLUS_MINUS_A','PLUS_MINUS_B'])
-drop_cols 
 
-from numpy import sort
-from sklearn.feature_selection import SelectFromModel
+# drop_cols = list(X_test.columns[bst.feature_importances_<0.011533])
+# drop_cols.extend(['TOTAL_CLOSE','ML_A','ML_B','WL_A','WL_B','PLUS_MINUS_A',
+#                  'PLUS_MINUS_B','PTS_SPR_CLOSE', 'FTM_OPP_B', 'FTM_OPP_A', 
+#                  'FTA_OPP_A', 'FTA_OPP_B', 'DREB_OPP_A', 'DREB_OPP_B'])
+drop_cols =['BLK_OPP_A',
+ 'BLK_OPP_B',
+ 'BLK_A',
+ 'DREB_B',
+ 'DREB_A',
+ 'DREB_OPP_A',
+ 'DREB_OPP_B',
+ 'FG3A_B',
+ 'FG3A_A',
+ 'FG3A_OPP_A',
+ 'FG3M_OPP_A',
+ 'FG3A_OPP_B',
+ 'FG3M_OPP_B',
+ 'FGM_OPP_A',
+ 'FGM_OPP_B',
+ 'FG_PCT_B',
+ 'FTA_A',
+ 'FTA_B',
+ 'FTA_OPP_A',
+ 'FTA_OPP_B',
+ 'FTM_OPP_A',
+ 'FTM_OPP_B',
+ 'FT_PCT_A',
+ 'FT_PCT_B',
+ 'FT_PCT_OPP_A',
+ 'FT_PCT_OPP_B',
+ 'GAME_DATE',
+ 'ML_A',
+ 'ML_B',
+ 'OREB_OPP_A',
+ 'OREB_OPP_B',
+ 'PF_OPP_A',
+ 'PLUS_MINUS_A',
+ 'PLUS_MINUS_B',
+ 'PTS_SPR_CLOSE',
+ 'TOTAL_CLOSE',
+ 'WL_A',
+ 'WL_B']
+
+
+
+
  
 
 # Fit model using each importance as a threshold
-thresholds = sort(bst.feature_importances_)
-for thresh in thresholds:
-	# select features using threshold
-    selection = SelectFromModel(bst, threshold=thresh, prefit=True)
-    select_X_train = selection.transform(X_train)
-	# train model
-    selection_model = xgb.XGBRegressor(base_score=0.5, 
-                       booster='gbtree', 
-                       colsample_bytree=0.77,
-                       gpu_id=-1, 
-                       gamma=0, 
-                       learning_rate=0.064,
-                       max_depth=2, 
-                       n_estimators=130, 
-                       n_jobs=-1,
-                       random_state=0, 
-                       reg_lambda=1,
-                       subsample=0.76,
-                       )
-    selection_model.fit(select_X_train, y_train)
-	# eval model
-    select_X_test = selection.transform(X_test)
-    predictions = selection_model.predict(select_X_test)
+# thresholds = sort(bst1.feature_importances_)
+# for thresh in thresholds:
+# 	# select features using threshold
+#     selection = SelectFromModel(bst1, threshold=thresh, prefit=True)
+#     select_X_train = selection.transform(X_train)
+# 	# train model
+#     selection_model = xgb.XGBRegressor( 
+#                        objective= 'reg:squarederror', 
+#                        booster='gbtree', 
+#                        colsample_bytree=.87, 
+#                        gamma=0, 
+#                        learning_rate=.056,
+#                        max_depth=2, 
+#                        n_estimators=199, 
+#                        n_jobs=-1,
+#                        random_state=0, 
+#                        reg_lambda=6,
+#                        subsample=0.61,
+#                        )
+#     selection_model.fit(select_X_train, y_train)
+# 	# eval model
+#     select_X_test = selection.transform(X_test)
+#     predictions = selection_model.predict(select_X_test)
     
-    train_score = mean_squared_error(y_train, bst.predict(X_train), squared=False)
-    vegas = mean_squared_error(np.append(y_train,y_test), np.append(train_vegas,test_vegas), squared = False)
-    model_score = mean_squared_error(y_test, bst.predict(X_test), squared=False)
-    #print(f'{thresh} = Vegas: {vegas}  Model: {model_score}  Train: {train_score}')
-    accuracy = mean_squared_error(y_test, predictions, squared=False)
-    print(f"Thresh={thresh:3f}, n:{select_X_train.shape[1]}, Accuracy: {accuracy}")
+#     train_score = mean_squared_error(y_train, bst1.predict(X_train), squared=False)
+#     vegas = mean_squared_error(np.append(y_train,y_test), np.append(train_vegas,test_vegas), squared = False)
+#     model_score = mean_squared_error(y_test, bst1.predict(X_test), squared=False)
+#     #print(f'{thresh} = Vegas: {vegas}  Model: {model_score}  Train: {train_score}')
+#     accuracy = mean_squared_error(y_test, predictions, squared=False)
+#     print(f"Thresh={thresh:3f}, n:{select_X_train.shape[1]}, Accuracy: {accuracy}")
 
 #guess I will mess around a bit with less features to see if this will improve performance 
 
@@ -278,46 +415,53 @@ train_vegas = season[(season.SEASON_ID==i) | (season.SEASON_ID==i+1) | (season.S
 test_vegas = season[(season.SEASON_ID==i) | (season.SEASON_ID==i+1) | (season.SEASON_ID==i+2)].iloc[int(len(season[(season.SEASON_ID==i) | 
              (season.SEASON_ID==i+1) | (season.SEASON_ID==i+2)])*(7/9)):, 5]
 
-for i in np.linspace(0.02, 0.08,61):
-for i in np.linspace(0.5, 1,51):
-for i in range(20):
-    bst1 = xgb.XGBRegressor(base_score=0.5, 
+
+
+
+lst = []
+# for i in np.linspace(0.02, 0.08,61):
+# for i in np.linspace(0.5, 1,51):
+for i in range(100,251):
+    bst1 = xgb.XGBRegressor( 
+                       objective= 'reg:squarederror', 
                        booster='gbtree', 
-                       colsample_bytree=0.96,
-                       gpu_id=-1, 
+                       colsample_bytree=.87, 
                        gamma=0, 
-                       learning_rate=0.063,
+                       learning_rate=.056,
                        max_depth=2, 
-                       n_estimators=109, 
+                       n_estimators=199, 
                        n_jobs=-1,
                        random_state=0, 
-                       reg_lambda=5,
+                       reg_lambda=6,
                        subsample=0.61,
                        )
     bst1.fit(X_train,y_train)
     model_score = mean_squared_error(y_test, bst1.predict(X_test), squared=False)
     vegas = mean_squared_error(np.append(y_train,y_test), np.append(train_vegas,test_vegas), squared = False)
     train_score = mean_squared_error(y_train, bst1.predict(X_train), squared=False)
-    print(f'{i} Vegas: {vegas}  Model: {model_score}  Train: {train_score}')
+    #print(f'{i} Vegas: {vegas}  Model: {model_score}  Train: {train_score}')
+    lst.append([model_score, i])
+
+sorted(lst)
 
 
 ### BEST MODEL SO FAR
-bst1 = xgb.XGBRegressor(base_score=0.5, 
+bst1 = xgb.XGBRegressor( 
+                       objective= 'reg:squarederror', 
                        booster='gbtree', 
-                       colsample_bytree=0.96,
-                       gpu_id=-1, 
+                       colsample_bytree=.87, 
                        gamma=0, 
-                       learning_rate=0.063,
+                       learning_rate=.056,
                        max_depth=2, 
-                       n_estimators=109, 
+                       n_estimators=199, 
                        n_jobs=-1,
                        random_state=0, 
-                       reg_lambda=5,
+                       reg_lambda=6,
                        subsample=0.61,
                        )
 bst1.fit(X_train,y_train)
 model_score = mean_squared_error(y_test, bst1.predict(X_test), squared=False)
-vegas = mean_squared_error(np.append(y_train,y_test), np.append(train_vegas,test_vegas), squared = False)
+vegas = mean_squared_error(y_test, test_vegas, squared=False)
 train_score = mean_squared_error(y_train, bst1.predict(X_train), squared=False)
 print(f'Vegas: {vegas}  Model: {model_score}  Train: {train_score}')
 
@@ -338,7 +482,7 @@ for i in range(22007,22018):
 
     bst1.fit(X_train,y_train)
     train_score = mean_squared_error(y_train, bst1.predict(X_train), squared=False)
-    vegas = mean_squared_error(np.append(y_train,y_test), np.append(train_vegas,test_vegas), squared = False)
+    vegas = mean_squared_error(y_test, test_vegas, squared=False)
     model_score = mean_squared_error(y_test, bst1.predict(X_test), squared=False)
     print(f'{i} = Vegas: {vegas}  Model: {model_score}  Train: {train_score}')
 

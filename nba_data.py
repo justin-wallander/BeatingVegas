@@ -188,8 +188,6 @@ clean_merge.tail()
 #now I need to clean data types, remove columns and create the running average. I will try to do it with 1
 #and then turn it into a function to loop through each team and season... function turned out ok, but
 #takes for ever in the for loop 
-#creating a second to create the totals on the line prior in order to avoid potential info leakage
-#since the line I currently have the totals on incorporate the actual score of the game
 def running_col_avg(df, year, team):
     df1 = df[(df.SEASON_ID == year)&(df.TEAM_ABBREVIATION_A == team)]
     df1= df1.reset_index(drop = True)
@@ -216,8 +214,6 @@ def running_col_avg(df, year, team):
     df1['WL']= df1['WL'].map({'W': 1, 'L' :0})
     df1['WL_OPP']=df1['WL_OPP'].map({'W': 1, 'L' :0})
     df1['GP'] = df1.index
-    # for idx  in range(len(df1)):
-    #     if idx + 1 != len(df1):
     df1['GAME_TOTAL'] = df1['PTS'] + df1['PTS_OPP']
 
     df1[avg_cols] = df1[avg_cols].astype(float)
@@ -227,8 +223,6 @@ def running_col_avg(df, year, team):
             df1.loc[counter, avg_cols] += df1.loc[idx, avg_cols]
             counter+=1
         df1.loc[idx, avg_cols] /= (idx +1)
-
-
     return df1
 
 def moving_col_avg(df, year, team, window = 10):
@@ -341,13 +335,17 @@ change_list= ['WL','MIN','PTS','FGM','FGA','FG_PCT','FG3M','FG3A','FG3_PCT','FTM
 avg_season.sort_values('GAME_ID', inplace= True)
 avg_10.sort_values('GAME_ID', inplace= True)
 
-
+#I need to shift stats columns down 1 while keeping the other columns in the same place in order
+#to prevent info leakage. If I did not shift, I would be averaging in the game stats for the game
+#I am trying to predict the total on
 shift_season_df = pd.DataFrame(columns=avg_season.columns)
 for year in season_id_list:
     for team in team_abbrev_list:
         t_df = pd.DataFrame(columns=avg_season.columns)
-        t_df[same_list] = avg_season[(avg_season.SEASON_ID == year) & (avg_season.TEAM_ABBREVIATION == team)][same_list]
-        t_df[change_list] = avg_season[(avg_season.SEASON_ID == year) & (avg_season.TEAM_ABBREVIATION == team)][change_list].shift(periods=1)
+        t_df[same_list] = avg_season[(avg_season.SEASON_ID == year) & (
+                                      avg_season.TEAM_ABBREVIATION == team)][same_list]
+        t_df[change_list] = avg_season[(avg_season.SEASON_ID == year) & (
+                                        avg_season.TEAM_ABBREVIATION == team)][change_list].shift(periods=1)
         t_df.dropna(inplace=True)
         shift_season_df = pd.concat([shift_season_df, t_df], ignore_index=True)
 
@@ -418,7 +416,7 @@ avg_season_comb_df['GAME_DATE'] = avg_season_comb_df['GAME_DATE'].apply(lambda x
 avg_season_comb_df= pd.concat([avg_season_comb_df, pd.get_dummies(avg_season_comb_df['TEAM_A'],prefix='TEAM_A', drop_first=True)], axis = 1)
 avg_season_comb_df= pd.concat([avg_season_comb_df, pd.get_dummies(avg_season_comb_df['TEAM_B'],prefix='TEAM_B', drop_first=True)], axis = 1)
 avg_season_comb_df= avg_season_comb_df.drop(['TEAM_A', 'TEAM_B'], axis = 1)
-avg_season_comb_df.to_csv('data/avg_season.csv', index=False)
+avg_season_comb_df.to_csv('data/season.csv', index=False)
 
 
 
