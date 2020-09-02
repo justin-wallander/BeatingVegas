@@ -66,7 +66,7 @@ def running_col_avg(df, year, team):
 
 * Once I had the averages for each team's offensive and defensive stats, I took the odds dataframe I created and combined it with the averages dataframe. Then I recombine the teams again to have a final row that included the home teams offensive and defensive stats and the away teams offensive and defensive stats, as well as the odds for the O/U open and close as well as the open and close of the points spread.
 
-*The next order of business was to insure that I was not using any information I would not have at the time of the prediction. I took out the points spread close and the O/U close. I also had to figure out how to shift the averages down 1 row while keeping everything else the same. This was to avoid the fact that if I did not do it, I would be using stats that occurred in the game in the average in order to predict that game. Fortunately I was able to figure out a some code to do this fairyly quickly: 
+* The next order of business was to insure that I was not using any information I would not have at the time of the prediction. I took out the points spread close and the O/U close. I also had to figure out how to shift the averages down 1 row while keeping everything else the same. This was to avoid the fact that if I did not do it, I would be using stats that occurred in the game in the average in order to predict that game. Fortunately I was able to figure out a some code to do this fairyly quickly: 
 ```python
 same_list=['SEASON_ID','TEAM_ID','TEAM_ABBREVIATION','TEAM_NAME','GAME_ID','GAME_DATE',
         'MATCHUP','TEAM_TEST','TEST_OPP','ML_A','ML_B','TOTAL_OPEN','TOTAL_CLOSE',
@@ -99,7 +99,7 @@ for year in season_id_list:
 * Correlation map for the Offensive stats
 ![Offensive Correlation Map](/images/OFF_CORR.png)
 
-*NBA Total Pts Scored Season Averages and O/U CLosing line Season Averages 
+* NBA Total Pts Scored Season Averages and O/U CLosing line Season Averages 
 
 ![Averages](/images/avg_pts.png)
 
