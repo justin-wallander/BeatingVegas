@@ -105,22 +105,22 @@ for year in season_id_list:
 
 * As we can see from this graph, Vegas is pretty dang good. Also, because of the increase in the last 3 seasons I had to completely reevaluate my strategy for my train-test-split. On the intial models that I ran, I was splitting my data by season, keeping the first 9 seasons in the training set and testing on the last 3. Due to the rise in scoring over those seasons, the model was not preforming well.
 
-*I decided to split the data in groups of 3 seasons, and then mainly focused on the last 3 seasons for the modeling. I split those last 3 seasons into 7/9 for the train and 2/9 for the test. So I would train on 2 and 1/3 seasons and predict on the final 2/3 of the season. This is to simulate having to wait a bit into the 3rd season in order to account for any potential massive shifts in team data. 
+* I decided to split the data in groups of 3 seasons, and then mainly focused on the last 3 seasons for the modeling. I split those last 3 seasons into 7/9 for the train and 2/9 for the test. So I would train on 2 and 1/3 seasons and predict on the final 2/3 of the season. This is to simulate having to wait a bit into the 3rd season in order to account for any potential massive shifts in team data. 
 
 
 ### THE MODEL: XGBoost for the win? 
 
 * Baseline Dummy Regressor score on all test data = 21.1072 (not too shabby) 
 
-*The first couple of runs of my XGBoost model did not beat the Dummy (disconcerting to say the least)
+* The first couple of runs of my XGBoost model did not beat the Dummy (disconcerting to say the least)
 
-*After quite a bit of tinkering with my splits, feature selection, and SKLearn’s RandomizedCV and GridsearchCV I was able to accomplish some decent results:
+* After quite a bit of tinkering with my splits, feature selection, and SKLearn’s RandomizedCV and GridsearchCV I was able to accomplish some decent results:
 	* Features were whittled from 144 to 46 (categorical team data proved not to matter much in this model)
 	* I ultimately used Vegas' closing line as my true baseline. Vegas’ RMSE on all of the data in my test set was 18.56 
 	* My Model’s RMSE on all the data in my test set= 18.75
-	*HOWEVER.... When running the model specifically on 1 team (My Dallas Mavericks) I was actually able to slightly beat Vegas:
+	* HOWEVER.... When running the model specifically on 1 team (My Dallas Mavericks) I was actually able to slightly beat Vegas:
 		* Vegas RMSE when predicting DAL = 21.199
-		* odel RMSE when predicting DAL= 21.108 
+		* Model RMSE when predicting DAL= 21.108 
 * The Final model hyperparameters:
 ```python
 bst1 = xgb.XGBRegressor( 
