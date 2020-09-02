@@ -35,9 +35,9 @@ for ele in team_id_list:
     games['GAME_DATE'] = pd.to_datetime(games['GAME_DATE'])
     games = games[games.SEASON_ID.str[1:].astype(int) >= 2007]
     df = pd.concat([df, games], ignore_index=True)
-# having an issue with IND and BOS only having 81 games, in 1 season that is the case but not all- resolved
 
 
+#creating a function to make sure I am not missing any games for the teams
 def checking_season_count(df, year, team):
     if 'TEAM_ABBREVIATION_A' in df.columns:
         return ((df[(df.SEASON_ID == year) & (df['TEAM_ABBREVIATION_A'] == team) & 
@@ -46,7 +46,8 @@ def checking_season_count(df, year, team):
         (df[(df.SEASON_ID == year) & (df['TEAM_ABBREVIATION_B'] == team) & 
         (df['GAME_DATE'] > datetime.datetime(int(year[1:]), 8, 9))]
         [['GAME_ID', 'TEAM_ABBREVIATION_B', 'GAME_DATE', 'MATCHUP_B']]))
-    return df[(df.SEASON_ID == year) & (df['TEAM_ABBREVIATION'] == team) & (df['GAME_DATE'] > datetime.datetime(int(year[1:]), 8, 9))][['GAME_ID', 'TEAM_ABBREVIATION','GAME_DATE', 'MATCHUP']]
+    return df[(df.SEASON_ID == year) & (df['TEAM_ABBREVIATION'] == team) & 
+    (df['GAME_DATE'] > datetime.datetime(int(year[1:]), 8, 9))][['GAME_ID', 'TEAM_ABBREVIATION','GAME_DATE', 'MATCHUP']]
 
 
 
@@ -135,17 +136,14 @@ team_abbrev_list
 #I figured out a good cutoff point to get rid of the extra preseaon games
 clean_df = pd.DataFrame(columns=combined_df.columns)
 for year in season_id_list:
-    clean = combined_df[(combined_df['SEASON_ID'] == year) & (combined_df['GAME_DATE'] > datetime.datetime(int(year[1:]), 8, 9))].sort_values('GAME_DATE')
+    clean = combined_df[(combined_df['SEASON_ID'] == year) & 
+    (combined_df['GAME_DATE'] > datetime.datetime(int(year[1:]), 8, 9))].sort_values('GAME_DATE')
     clean_df = pd.concat([clean_df, clean], ignore_index=True)
 
 #clean_df.to_csv('clean_df.csv',index=False)
 #clean_df = pd.read_csv('clean_df.csv')
 clean_df.info()
 
-#taking out 2019 for now, can add back later or use as testing
-# df_2019 = clean_df[clean_df.SEASON_ID == '22019']
-# clean_df = clean_df[clean_df.SEASON_ID != '22019']
-# clean_df
 
 #I think this is a good spot to insert the Odds data
 #well turns out I probably will be needing the vegas lines so here we go
@@ -225,6 +223,8 @@ def running_col_avg(df, year, team):
         df1.loc[idx, avg_cols] /= (idx +1)
     return df1
 
+
+#function to create moving averages instead of season averages 
 def moving_col_avg(df, year, team, window = 10):
     df1 = df[(df.SEASON_ID == year)&(df.TEAM_ABBREVIATION_A == team)]
     df1= df1.reset_index(drop = True)
@@ -280,7 +280,8 @@ avg_season = pd.DataFrame(columns= ['SEASON_ID','TEAM_ID','TEAM_ABBREVIATION','T
 
 for year in season_id_list:
     for team in team_abbrev_list:
-        avg_season = pd.concat([avg_season, running_col_avg(clean_merge, year, team)], ignore_index=True)
+        avg_season = pd.concat([avg_season, running_col_avg(clean_merge, year, team)], 
+        ignore_index=True)
 
 #creating rolling average w/ window of 10
 avg_10 = pd.DataFrame(columns= ['SEASON_ID','TEAM_ID','TEAM_ABBREVIATION','TEAM_NAME',
@@ -297,7 +298,8 @@ avg_10 = pd.DataFrame(columns= ['SEASON_ID','TEAM_ID','TEAM_ABBREVIATION','TEAM_
 
 for year in season_id_list:
     for team in team_abbrev_list:
-        avg_10 = pd.concat([avg_10, moving_col_avg(clean_merge, year, team)], ignore_index=True)
+        avg_10 = pd.concat([avg_10, moving_col_avg(clean_merge, year, team)], 
+        ignore_index=True)
 
 
 avg_10 = avg_10.dropna()
@@ -309,7 +311,7 @@ avg_season[avg_season.SEASON_ID=='22019'][['GAME_DATE','GAME_TOTAL', 'MATCHUP', 
 #Messed around with some plots, hist, and kde of the PTS for a season
 avg_season[(avg_season.SEASON_ID > '22014') & (avg_season.TEAM_ABBREVIATION == 'GSW')]['PTS'].hist()
 avg_season[(avg_season.SEASON_ID > '22004')]['PTS'].plot.kde()
-
+#just some quick plots to make sure things look good
 plt.scatter(avg_season[avg_season.SEASON_ID=='22018'].GAME_DATE, avg_season[avg_season.SEASON_ID=='22018'].GAME_TOTAL)
 plt.scatter(avg_season[avg_season.SEASON_ID=='22018'].GAME_DATE, avg_season[avg_season.SEASON_ID=='22018'].TOTAL_CLOSE)
 plt.show()

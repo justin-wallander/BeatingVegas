@@ -7,7 +7,7 @@ clean_df = pd.read_csv('clean_df.csv')
 # odds_19 = pd.read_excel('data/nba_odds_2019.xlsx')
 # odds_19.Date.value_counts()
 
-
+#code that I used intially to create the odds df
 odds_df = pd.DataFrame(columns=['SEASON_ID','GAME_ID','MATCHUP','GAME_DATE','TEAM_ID','Date','VH', 'Team', 'Final','Open', 'Close', 'ML'])
 for i in [2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019]:
     odds_i = pd.read_excel(f'data/nba_odds_{i}.xlsx')

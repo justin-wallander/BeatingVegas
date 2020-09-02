@@ -12,16 +12,54 @@ import seaborn as sns
 plt.style.use('fivethirtyeight')
 %matplotlib inline
 
-
+#reading in the orginal season data
 season = pd.read_csv('data/avg_season.csv')
 # [22007, 22008, 22009, 22010, 22011, 22012, 22013, 22014, 22015,
 #        22016, 22017, 22018, 22019]
-
+#reading in data in order to display teams specifically
 season_teams = pd.read_csv('data/season.csv')
 dal_19 = season_teams[(season_teams.SEASON_ID==22019) & ((season_teams.TEAM_A == 'DAL') | (season_teams.TEAM_B == 'DAL'))]
 dal_19 = dal_19.iloc[int(len(dal_19)*(2/3)):, :]
 dal_19
-dal_X_test = dal_19.drop(dal_drop, axis=1)
+drop_cols =['BLK_OPP_A',
+ 'BLK_OPP_B',
+ 'BLK_A',
+ 'DREB_B',
+ 'DREB_A',
+ 'DREB_OPP_A',
+ 'DREB_OPP_B',
+ 'FG3A_B',
+ 'FG3A_A',
+ 'FG3A_OPP_A',
+ 'FG3M_OPP_A',
+ 'FG3A_OPP_B',
+ 'FG3M_OPP_B',
+ 'FGM_OPP_A',
+ 'FGM_OPP_B',
+ 'FG_PCT_B',
+ 'FTA_A',
+ 'FTA_B',
+ 'FTA_OPP_A',
+ 'FTA_OPP_B',
+ 'FTM_OPP_A',
+ 'FTM_OPP_B',
+ 'FT_PCT_A',
+ 'FT_PCT_B',
+ 'FT_PCT_OPP_A',
+ 'FT_PCT_OPP_B',
+ 'GAME_DATE',
+ 'ML_A',
+ 'ML_B',
+ 'OREB_OPP_A',
+ 'OREB_OPP_B',
+ 'PF_OPP_A',
+ 'PLUS_MINUS_A',
+ 'PLUS_MINUS_B',
+ 'PTS_SPR_CLOSE',
+ 'TOTAL_CLOSE',
+ 'WL_A',
+ 'WL_B']
+dal_X_test = dal_19.drop(drop_cols, axis=1)
 dal_X_test.columns = ['VEGAS_OPEN', 'PTS_SPR_OPEN', 'HOME_WIN_PCT', 'HOME_PPG', 'HOME_FGM', 'HOME_FGA',
 'HOME_FG_PCT', 'HOME_FG3M', 'HOME_FG3_PCT', 'HOME_FTM', 'HOME_OREB', 'HOME_REB', 'HOME_AST',
 'HOME_STL', 'HOME_TOV', 'HOME_PF', 'HOME_PTS_ALLOW', 'HOME_FGA_OPP', 'HOME_FG_PCT_OPP',
@@ -51,7 +89,7 @@ dal_y_test = dal_19.GAME_TOTAL
 dal_y_test
 dal_test_vegas = dal_19.TOTAL_CLOSE
 dal_test_vegas
-
+#best model: 
 bst1 = xgb.XGBRegressor( 
                        objective= 'reg:squarederror', 
                        booster='gbtree', 
