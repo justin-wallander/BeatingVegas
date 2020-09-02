@@ -66,7 +66,7 @@ def running_col_avg(df, year, team):
 
 * Once I had the averages for each team's offensive and defensive stats, I took the odds dataframe I created and combined it with the averages dataframe. Then I recombine the teams again to have a final row that included the home teams offensive and defensive stats and the away teams offensive and defensive stats, as well as the odds for the O/U open and close as well as the open and close of the points spread.
 
-*The next order of business was to insure that I was not using any information I would not have at the time of the prediction. I took out the points spread close and the O/U close. I also had to figure out how to shift the averages down 1 row while keeping everything else the same. This was to avoid the fact that if I did not do it, I would be using stats that occurred in the game in the average in order to predict that game. Fortunately I was able to figure out a some code to do this fairyly quickly: 
+* The next order of business was to insure that I was not using any information I would not have at the time of the prediction. I took out the points spread close and the O/U close. I also had to figure out how to shift the averages down 1 row while keeping everything else the same. This was to avoid the fact that if I did not do it, I would be using stats that occurred in the game in the average in order to predict that game. Fortunately I was able to figure out a some code to do this fairyly quickly: 
 ```python
 same_list=['SEASON_ID','TEAM_ID','TEAM_ABBREVIATION','TEAM_NAME','GAME_ID','GAME_DATE',
         'MATCHUP','TEAM_TEST','TEST_OPP','ML_A','ML_B','TOTAL_OPEN','TOTAL_CLOSE',
@@ -99,9 +99,62 @@ for year in season_id_list:
 * Correlation map for the Offensive stats
 ![Offensive Correlation Map](/images/OFF_CORR.png)
 
-*NBA Total Pts Scored Season Averages and O/U CLosing line Season Averages 
+* NBA Total Pts Scored Season Averages and O/U CLosing line Season Averages 
 
 ![Averages](/images/avg_pts.png)
+
+* As we can see from this graph, Vegas is pretty dang good. Also, because of the increase in the last 3 seasons I had to completely reevaluate my strategy for my train-test-split. On the intial models that I ran, I was splitting my data by season, keeping the first 9 seasons in the training set and testing on the last 3. Due to the rise in scoring over those seasons, the model was not preforming well.
+
+*I decided to split the data in groups of 3 seasons, and then mainly focused on the last 3 seasons for the modeling. I split those last 3 seasons into 7/9 for the train and 2/9 for the test. So I would train on 2 and 1/3 seasons and predict on the final 2/3 of the season. This is to simulate having to wait a bit into the 3rd season in order to account for any potential massive shifts in team data. 
+
+
+### THE MODEL: XGBoost for the win? 
+
+* Baseline Dummy Regressor score on all test data = 21.1072 (not too shabby) 
+
+*The first couple of runs of my XGBoost model did not beat the Dummy (disconcerting to say the least)
+
+*After quite a bit of tinkering with my splits, feature selection, and SKLearn’s RandomizedCV and GridsearchCV I was able to accomplish some decent results:
+	* Features were whittled from 144 to 46 (categorical team data proved not to matter much in this model)
+	* I ultimately used Vegas' closing line as my true baseline. Vegas’ RMSE on all of the data in my test set was 18.56 
+	* My Model’s RMSE on all the data in my test set= 18.75
+	*HOWEVER.... When running the model specifically on 1 team (My Dallas Mavericks) I was actually able to slightly beat Vegas:
+		* Vegas RMSE when predicting DAL = 21.199
+		* odel RMSE when predicting DAL= 21.108 
+* The Final model hyperparameters:
+```python
+bst1 = xgb.XGBRegressor( 
+                       objective= 'reg:squarederror', 
+                       booster='gbtree', 
+                       colsample_bytree=.87,  
+                       learning_rate=.056,
+                       max_depth=2, 
+                       n_estimators=199, 
+                       n_jobs=-1,
+                       random_state=0, 
+                       reg_lambda=6,
+                       subsample=0.61,
+                       )
+```
+
+* A graph of the Mavs Actual Score, vs Vegas Prediction, vs Model Prediction: 
+
+![Predicted](/images/Vegasvspredvsreal.png)
+
+* Feature Importance- Given I would have the Vegas Opening Line, I kept that in the model and it comes as no surprise that it was the number one feature. Will be worth exploring what would happen if I take that out. Also of note, Home and Away Pts per game did not make it in the top 25 features to split on for this model, which certainly goes against what my intuition would expect. 
+
+![F Importance](/images/F_importance.png)
+
+### Next Steps:
+* Connect to a live odds api to get current lines
+* Get more granular data- advanced stats, player stats, etc
+* Build a simulator to see how certain gambling strategies could play out
+* ULTIMATE STEP: Add other leagues/sports into the mix
+
+
+
+
+
 
 
 
